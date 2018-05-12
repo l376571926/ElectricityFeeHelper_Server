@@ -3,3 +3,5 @@ spring:
     url: jdbc:mysql://localhost:3306/test_db
     username: test_db
     password: 86ec9ae36c
+  thymeleaf:
+    mode: LEGACYHTML5
