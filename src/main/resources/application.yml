@@ -1,7 +1,9 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/test_db
-    username: test_db
-    password: 86ec9ae36c
+    #  连接要指定字符集，否则存进数据库中的中文会出现乱码
+    url: jdbc:mysql://localhost:3306/efhelper?useUnicode=true&characterEncoding=utf8
+    username: efhelper
+    password: e471488a84
   thymeleaf:
     mode: LEGACYHTML5
+    cache: false

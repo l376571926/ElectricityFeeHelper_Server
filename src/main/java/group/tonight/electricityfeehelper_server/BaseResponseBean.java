@@ -20,6 +20,9 @@ public class BaseResponseBean {
         this.msg = msg;
     }
 
+    public BaseResponseBean() {
+    }
+
     public BaseResponseBean(int code, String msg) {
         this.code = code;
         this.msg = msg;
