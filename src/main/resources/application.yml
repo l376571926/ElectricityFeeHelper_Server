@@ -7,3 +7,6 @@ spring:
   thymeleaf:
     mode: LEGACYHTML5
     cache: false
+  jpa:
+    #显示sql日志
+    show-sql: true

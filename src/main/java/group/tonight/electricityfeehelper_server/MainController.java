@@ -1,6 +1,7 @@
 package group.tonight.electricityfeehelper_server;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.crossstore.ChangeSet;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -12,7 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 @RestController
@@ -67,6 +72,11 @@ public class MainController {
         return new BaseResponseBean(0, "登录成功");
     }
 
+    @RequestMapping(value = "/getallpoweruserinfo")
+    public BaseResponseBean getAllPowerUserInfo() {
+        return new PowerUserResponse(mPowerUserJPA.findAll());
+    }
+
     /**
      * 如果定义了参数，那么参数必须设置默认值，否则会抛异常
      *
@@ -75,18 +85,53 @@ public class MainController {
      * @return
      */
     @RequestMapping(value = "/getpoweruserlist")
-    public PowerUserResponse getPowerUserList(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "5") int size) {
-        logger.info(page + " " + size);
-
-        //不分页
-//        List<PowerUser> powerUserList = mPowerUserJPA.findAll();
-
-        //分页
-        Page<PowerUser> powerUserPage = mPowerUserJPA.findAll(new PageRequest(page, size, new Sort(Sort.Direction.DESC, "id")));
-        List<PowerUser> powerUserList = powerUserPage.getContent();
-
+    public BaseResponseBean getPowerUserList(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "5") int size) {
         PowerUserResponse powerUserResponse = new PowerUserResponse();
-        powerUserResponse.setData(powerUserList);
+        if (size == -1) {
+            //不分页
+            List<PowerUser> powerUserList = mPowerUserJPA.findAll();
+            powerUserResponse.setData(powerUserList);
+        } else {
+            //分页
+            Page<PowerUser> powerUserPage = mPowerUserJPA.findAll(new PageRequest(page, size, new Sort(Sort.Direction.DESC, "id")));
+            List<PowerUser> powerUserList = powerUserPage.getContent();
+            powerUserResponse.setData(powerUserList);
+        }
+        logger.info("页数：" + page + "，每页数量：" + powerUserResponse.getData().size());
         return powerUserResponse;
+    }
+
+    @RequestMapping(value = "/searchpoweruser")
+    public BaseResponseBean getPowerUserByKey(String searchKey) {
+        if (StringUtils.isEmpty(searchKey)) {
+            return new BaseResponseBean(-1, "缺少参数：searchKey");
+        }
+        Set<PowerUser> set = new HashSet<>();
+        if (isNumeric(searchKey)) {
+            List<PowerUser> list0 = mPowerUserJPA.findByUserIdContaining(Long.parseLong(searchKey));
+            set.addAll(list0);
+        }
+
+        List<PowerUser> list1 = mPowerUserJPA.findByUserNameContains(searchKey);
+        List<PowerUser> list2 = mPowerUserJPA.findByUserPhoneContaining(searchKey);
+        List<PowerUser> list3 = mPowerUserJPA.findByPowerMeterIdContaining(searchKey);
+
+        set.addAll(list1);
+        set.addAll(list2);
+        set.addAll(list3);
+        List<PowerUser> newList = new ArrayList<>(set);
+
+        logger.info("查询电力用户结果，查询关键字：" + searchKey + " 个数：" + newList.size());
+        return new PowerUserResponse(newList);
+    }
+
+    public static boolean isNumeric(String str) {
+        String bigStr;
+        try {
+            bigStr = new BigDecimal(str).toString();
+        } catch (Exception e) {
+            return false;//异常 说明包含非数字。
+        }
+        return true;
     }
 }
